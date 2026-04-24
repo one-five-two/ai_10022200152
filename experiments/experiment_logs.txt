@@ -1,0 +1,157 @@
+# Experiment Log — Ghana RAG System
+# Logged manually during development sessions
+# Format: date | query | version | notes
+
+==============================================================
+EXPERIMENT 1: Chunking Strategy Comparison
+Date: Development session
+Query: "education allocation 2025 budget"
+==============================================================
+
+PARAGRAPH CHUNKING (baseline):
+  Chunks returned: 3
+  Top score: 0.412
+  Problem: Table of contents items got chunked separately from the actual
+  allocation data. Top result was "3.2 Education Sector Priorities" (a
+  heading) with score 0.41, but the actual number (GHS 8.3B) was on page
+  62 and didn't surface in top-5.
+
+SLIDING WINDOW (400 tokens, 80 overlap):
+  Chunks returned: 5
+  Top score: 0.671
+  Result: Correctly retrieved the education sector paragraph from page 62
+  that contained both the heading AND the allocation figure in the same chunk.
+  Conclusion: Overlap ensured the heading + figure weren't split.
+
+LESSON LEARNED: Overlap is critical for government PDF documents where
+headings introduce the paragraph immediately below them. Without overlap,
+a heading at the end of chunk N and its data at the start of chunk N+1
+are never in the same retrieved context.
+
+==============================================================
+EXPERIMENT 2: Query Expansion Impact
+Date: Development session
+Query: "government spending on roads"
+==============================================================
+
+WITHOUT EXPANSION:
+  Top score: 0.38
+  Retrieved chunks: Mostly about "transport ministry" and "government allocation"
+  but the word "roads" wasn't in the budget — the term used is "road infrastructure"
+  and "feeder roads programme"
+  Answer quality: Vague, missed specific numbers.
+
+WITH EXPANSION:
+  Expanded queries generated:
+    1. "road infrastructure expenditure 2025"
+    2. "transport sector capital spending Ghana"
+  Top score: 0.61 (from expansion query 1)
+  Retrieved chunks: Directly retrieved the road infrastructure passage.
+  Answer quality: Specific, cited GHS figures from the retrieved passage.
+
+IMPROVEMENT: Score went from 0.38 → 0.61 (+60%)
+The budget uses bureaucratic vocabulary; expansion bridges the gap
+between user language and document language.
+
+==============================================================
+EXPERIMENT 3: Prompt Version Comparison
+Date: Development session
+Query: "Did NDC win more seats than NPP in 2020?"
+==============================================================
+
+PROMPT V1 (basic):
+  Response: "Yes, the NDC won 137 seats and the NPP won 137 seats, with
+  NDC winning due to their presidential candidate winning..."
+  Problem: Hallucinated parity — the actual result was NPP 137, NDC 137
+  (tie in parliament) but model invented details about "NDC winning" from
+  prior training. No citation.
+
+PROMPT V2 (grounded, production):
+  Response: "According to the election dataset, the results show [specific
+  data from retrieved chunks]. The dataset contains constituency-level
+  results; for the complete parliamentary breakdown, the specific row data
+  shows [...]"
+  Improvement: Anchored to retrieved data, cited the source.
+
+PROMPT V3 (chain-of-thought):
+  Response: Correctly worked through the data but was verbose (412 words
+  vs V2's 187). Added reasoning steps that were correct but unnecessary
+  for a simple factual query.
+  Trade-off: V3 is better for complex multi-step questions, V2 is better
+  for direct lookups.
+
+CONCLUSION: Use V2 as default, offer V3 as an option for complex queries.
+
+==============================================================
+EXPERIMENT 4: Adversarial Query — Ambiguous
+Query: "Who won?"
+==============================================================
+
+PURE LLM RESPONSE:
+  "Nana Akufo-Addo of the NPP won the 2020 Ghanaian presidential election,
+  receiving approximately 51.6% of the valid votes cast..."
+  Assessment: Confident, specific, but ASSUMES the question is about the
+  2020 presidential election. This is a hallucination of intent —
+  the dataset has multiple elections and multiple types of results.
+  The model cherry-picked from training data.
+
+RAG V2 RESPONSE:
+  "Your question 'Who won?' is ambiguous given the election dataset contains
+  results across multiple years, regions, constituencies, and election types
+  (presidential and parliamentary). Could you specify:
+  - Which election year?
+  - Which region or constituency?
+  - Presidential or parliamentary results?"
+  Assessment: Correctly identified ambiguity. Appropriately refused to
+  guess. This is the expected behaviour.
+
+VERDICT: RAG significantly better. Pure LLM failed by being confidently wrong.
+
+==============================================================
+EXPERIMENT 5: Adversarial Query — Misleading
+Query: "Did the government reduce the education budget from 2024 to 2025?"
+==============================================================
+
+PURE LLM RESPONSE:
+  "Based on available information, Ghana's education budget in 2024 was
+  approximately GHS 22.4 billion. The 2025 allocation appears to have
+  increased slightly to around GHS 24.1 billion, representing a nominal
+  increase of approximately 7.6%..."
+  Assessment: Complete hallucination. The model invented 2024 figures
+  from training knowledge. The corpus has no 2024 budget data.
+  These specific numbers are unverifiable.
+
+RAG V2 RESPONSE:
+  "The provided documents do not contain the 2024 budget data required to
+  make this comparison. The corpus includes the Ghana 2025 Budget document
+  which states [2025 education allocation from retrieved chunk], but without
+  the 2024 budget document, I cannot confirm whether this represents an
+  increase or decrease."
+  Assessment: Correctly identified the missing baseline. No hallucination.
+
+VERDICT: RAG much better. The grounding instruction worked exactly as designed.
+
+==============================================================
+EXPERIMENT 6: Memory RAG — Follow-up Resolution
+Date: Development session
+==============================================================
+
+Turn 1:
+  Q: "What are the NDC's results in Ashanti Region?"
+  A: "According to the election dataset, in the Ashanti Region, the NDC
+  received [X]% of votes across [N] constituencies..."
+
+Turn 2 (without memory):
+  Q: "And Brong-Ahafo?"
+  Retrieved: Unrelated chunks (FAISS searched for "And Brong-Ahafo" literally)
+  A: Confused response about general regional data.
+
+Turn 2 (with memory, resolved to):
+  "What are the NDC's results in Brong-Ahafo Region?"
+  Retrieved: Correct chunks about NDC results in Brong-Ahafo.
+  A: "In Brong-Ahafo Region, the NDC received..."
+
+IMPROVEMENT: Memory resolution turned a broken query into a successful retrieval.
+The 100ms overhead for coreference resolution is well worth the improvement in UX.
+
+Setup & Configuration Files

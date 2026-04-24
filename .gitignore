@@ -1,0 +1,20 @@
+.env
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+venv/
+.venv/
+*.egg-info/
+dist/
+build/
+.DS_Store
+
+# Data files can be large
+data/*.pdf
+data/*.csv
+
+# Generated index and logs
+vector_store/
+logs/
+*.log
