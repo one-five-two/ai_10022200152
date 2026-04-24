@@ -91,20 +91,20 @@ ghana_rag_chatbot_project/
 
 ## Setup
 
-### 1. Create virtual environment
+### 1. Created virtual environment
 
 ```bash
 python -m venv venv
 venv\Scripts\activate
 ```
 
-### 2. Install dependencies
+### 2. Installed dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### 3. Add datasets
+### 3. Added datasets
 
 Place the following files in the `data/` folder:
 
@@ -113,13 +113,13 @@ ghana_elections.csv
 ghana_budget_2025.pdf
 ```
 
-### 4. Run ingestion
+### 4. Ran ingestion
 
 ```bash
 python -m src.pipeline.ingest --csv data/ghana_elections.csv --pdf data/ghana_budget_2025.pdf
 ```
 
-### 5. Run the app
+### 5. Ran the app
 
 ```bash
 streamlit run ui/app.py
