@@ -1,6 +1,7 @@
 # Ghana RAG Chatbot — CS4241 Artificial Intelligence Project
 
 **Name:** NWAOGU SOMTOCHUKWU SHARON
+
 **Index Number:** 10022200152
 
 ---
