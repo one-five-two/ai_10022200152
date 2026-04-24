@@ -219,13 +219,17 @@ I evaluated the system based on:
 
 ## Deployment
 
-The application can be deployed using Streamlit Cloud:
+The application is deployed and accessible online:
 
-1. Push project to GitHub
-2. Use repository name: `ai_10022200152`
-3. Deploy `ui/app.py`
-4. No API key required (free local model used)
+🔗 Live App: https://ai-10022200152.onrender.com
 
+Steps used for deployment:
+
+1. Pushed project to GitHub
+2. Deployed using Render
+3. Configured app entry point as `ui/app.py`
+
+**Note:** Due to free-tier resource limitations, the deployed app may respond slowly. The full system runs correctly in the local environment.
 ---
 
 ## Final Notes
