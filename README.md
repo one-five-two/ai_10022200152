@@ -1,38 +1,71 @@
-# Ghana RAG Chatbot — CS4241 Introduction to Artificial Intelligence
+# Ghana RAG Chatbot — CS4241 Artificial Intelligence Project
 
-This project implements a manual Retrieval-Augmented Generation (RAG) chatbot for Academic City using:
+**Name:** NWAOGU SOMTOCHUKWU SHARON
+**Index Number:** 10022200152
 
-1. Ghana Election Result CSV
-2. Ghana 2025 Budget Statement PDF
+---
 
-The project follows the exam constraint: **no LangChain, no LlamaIndex, and no pre-built RAG pipeline**. The core RAG pieces are implemented manually: data cleaning, chunking, embeddings, vector storage, top-k retrieval, similarity scoring, prompt construction, context management, logging, and evaluation.
+## Project Overview
 
-> Replace this section before submission:
->
-> **Name:** YOUR NAME  
-> **Index Number:** YOUR INDEX NUMBER  
-> **Repository Name:** ai_YOUR_INDEX_NUMBER
+This project is a Retrieval-Augmented Generation (RAG) chatbot developed as part of my CS4241 Artificial Intelligence course. The system answers questions about Ghana’s elections and the 2025 national budget using real datasets.
+
+The chatbot works by retrieving relevant information from:
+
+* A Ghana Election Results dataset (CSV)
+* The Ghana 2025 Budget Statement (PDF)
+
+Instead of using frameworks like LangChain or LlamaIndex, I implemented the full RAG pipeline manually to demonstrate understanding of how modern AI systems retrieve and generate responses.
+
+---
+
+## How the System Works
+
+The chatbot follows a simple pipeline:
+
+1. The user enters a question
+2. The system converts the question into embeddings
+3. It retrieves the most relevant chunks from the dataset
+4. These chunks are inserted into a prompt
+5. A language model generates a response based only on the retrieved context
+
+This approach ensures that answers are grounded in real data and reduces hallucination.
+
+---
+
+## Key Features
+
+* Manual implementation of RAG (no LangChain or LlamaIndex)
+* Data cleaning and chunking for both CSV and PDF
+* Embedding generation using sentence-transformers
+* Vector storage using FAISS
+* Top-k similarity-based retrieval
+* Query expansion to improve search results
+* Prompt engineering to reduce hallucination
+* Debug tools:
+
+  * Retrieved context
+  * Similarity scores
+  * Final prompt
+* Performance tracking (latency)
+* Conversation memory (innovation feature)
+* Streamlit web interface
 
 ---
 
 ## Exam Requirement Checklist
 
-| Exam Part | Requirement | Where Implemented |
-|---|---|---|
-| Part A | Data cleaning and chunking | `src/ingestion/data_loader.py`, `src/ingestion/chunker.py` |
-| Part A | Chunking comparison | `experiments/chunking_comparison.py` |
-| Part B | Embeddings | `src/retrieval/embedder.py` |
-| Part B | Vector store and top-k retrieval | `src/retrieval/vector_store.py` |
-| Part B | Query expansion | `src/retrieval/query_expansion.py` |
-| Part B | Failure case and fix | `experiments/experiment_logs.txt` |
-| Part C | Prompt template and hallucination control | `src/prompts/prompt_builder.py` |
-| Part C | Prompt experiments | `experiments/prompt_ablation.py` |
-| Part D | Full RAG pipeline | `src/pipeline/rag_pipeline.py` |
-| Part D | Logging | `logs/pipeline_runs.jsonl` generated at runtime |
-| Part E | Adversarial testing | `src/evaluation/evaluator.py`, `run_eval.py` |
-| Part F | Architecture | `docs/architecture.md` |
-| Part G | Innovation component | `src/innovation/memory_rag.py` |
-| Final | Streamlit UI | `ui/app.py` |
+| Exam Part | Requirement                | Location               |
+| --------- | -------------------------- | ---------------------- |
+| Part A    | Data cleaning and chunking | `src/ingestion/`       |
+| Part B    | Embeddings and retrieval   | `src/retrieval/`       |
+| Part B    | Query expansion            | `query_expansion.py`   |
+| Part C    | Prompt engineering         | `src/prompts/`         |
+| Part D    | Full RAG pipeline          | `src/pipeline/`        |
+| Part D    | Logging                    | `logs/`                |
+| Part E    | Evaluation                 | README (below)         |
+| Part F    | Architecture               | `docs/architecture.md` |
+| Part G    | Innovation (memory)        | `src/innovation/`      |
+| Final     | UI                         | `ui/app.py`            |
 
 ---
 
@@ -40,40 +73,27 @@ The project follows the exam constraint: **no LangChain, no LlamaIndex, and no p
 
 ```text
 ghana_rag_chatbot_project/
-├── config.py
-├── requirements.txt
-├── run_eval.py
-├── ui/
-│   └── app.py
 ├── src/
-│   ├── ingestion/
-│   ├── retrieval/
-│   ├── prompts/
-│   ├── pipeline/
-│   ├── evaluation/
-│   └── innovation/
-├── experiments/
-├── tests/
-├── docs/
+├── ui/
 ├── data/
 ├── vector_store/
-└── logs/
+├── logs/
+├── experiments/
+├── docs/
+├── tests/
+├── config.py
+├── requirements.txt
+└── run_eval.py
 ```
 
 ---
 
 ## Setup
 
-### 1. Create and activate a virtual environment
+### 1. Create virtual environment
 
 ```bash
 python -m venv venv
-source venv/bin/activate
-```
-
-On Windows:
-
-```bash
 venv\Scripts\activate
 ```
 
@@ -83,60 +103,130 @@ venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-### 3. No API key needed
+### 3. Add datasets
 
-This free version uses a local HuggingFace model (`google/flan-t5-small`) instead of Claude/Anthropic. You do not need to buy credits or create an API key.
-
-### 4. Add the datasets
-
-Download the exam datasets and place them here:
+Place the following files in the `data/` folder:
 
 ```text
-data/ghana_elections.csv
-data/ghana_budget_2025.pdf
+ghana_elections.csv
+ghana_budget_2025.pdf
 ```
 
-### 5. Build the vector index
+### 4. Run ingestion
 
 ```bash
-python -m src.pipeline.ingest --csv data/ghana_elections.csv --pdf data/ghana_budget_2025.pdf --output vector_store
+python -m src.pipeline.ingest --csv data/ghana_elections.csv --pdf data/ghana_budget_2025.pdf
 ```
 
-### 6. Run the application
+### 5. Run the app
 
 ```bash
 streamlit run ui/app.py
 ```
 
-### 7. Run tests
+---
 
-```bash
-python -m pytest tests/ -v
-```
+## Part E — Evaluation
 
-### 8. Run evaluation
+### Evaluation Approach
 
-```bash
-python run_eval.py --mode all
-```
+I evaluated the system based on:
+
+* Accuracy (correctness of answers)
+* Hallucination (whether the system invents information)
+* Consistency (stability across similar queries)
+
+---
+
+### Adversarial Queries
+
+**Query 1 (Ambiguous):**
+"What did they say about education?"
+
+* Without memory, the system struggled
+* With memory enabled, it correctly inferred context
+
+**Conclusion:** Memory improves multi-turn understanding.
+
+---
+
+**Query 2 (Misleading):**
+"What is the election code for NPP?"
+
+* No relevant data was retrieved
+* System correctly responded that information was not available
+
+**Conclusion:** Prompt design successfully prevents hallucination.
+
+---
+
+### RAG vs Non-RAG
+
+**Without RAG:**
+
+* Generic answers
+* Occasional incorrect assumptions
+
+**With RAG:**
+
+* Answers grounded in dataset
+* References to sources
+* More accurate and reliable
+
+---
+
+### Failure Case
+
+**Query:**
+"Summarize the education section of the budget"
+
+**Issue:**
+
+* Output was mostly numbers and hard to read
+
+**Reason:**
+
+* Retrieved chunk contained structured numerical data
+* Model struggled with summarization
+
+**Fix:**
+
+* Modified prompt to enforce structured summaries
+
+**Result:**
+
+* Output became clearer and easier to understand
+
+---
+
+### Overall Performance
+
+* Retrieval accuracy was high
+* Similarity scores showed relevant chunk selection
+* Latency was acceptable (LLM step was slowest)
+
+---
+
+### Key Takeaways
+
+* Retrieval quality is critical in RAG systems
+* Prompt design strongly affects output quality
+* Even small models perform well with good retrieval
+* Memory improves user experience
 
 ---
 
 ## Deployment
 
-Recommended: Streamlit Cloud.
+The application can be deployed using Streamlit Cloud:
 
-1. Push this project to GitHub.
-2. Set repository name as `ai_YOUR_INDEX_NUMBER`.
-3. No secrets are required for this free version.
-4. Deploy `ui/app.py`.
-5. Submit both GitHub and deployed URL.
+1. Push project to GitHub
+2. Use repository name: `ai_10022200152`
+3. Deploy `ui/app.py`
+4. No API key required (free local model used)
 
 ---
 
-## Important Submission Notes
+## Final Notes
 
-- Add your name and index number in this README and in major source files before submission.
-- Invite `godwin.danso@acity.edu.gh` or `GodwinDansoAcity` as GitHub collaborator.
-- Record a 2-minute walkthrough explaining architecture, chunking, retrieval, prompt design, evaluation, and innovation.
-- Update `experiments/experiment_logs.txt` with your own manual experiment observations.
+This project demonstrates a complete, manual implementation of a RAG system, including retrieval, generation, evaluation, and deployment. It highlights how combining structured data with language models can produce more reliable and grounded AI systems.
